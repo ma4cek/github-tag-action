@@ -384,7 +384,8 @@ function run() {
             yield (0, action_1.default)();
         }
         catch (error) {
-            core.setFailed(error.message);
+            if (error instanceof Error)
+                core.setFailed(`Action failed. Error: ${error.message}, Stack: ${error.stack}`);
         }
     });
 }
