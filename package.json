@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "test": "jest --testTimeout 10000",
-    "package": "set NODE_OPTIONS=--openssl-legacy-provider && ncc build --source-map",
+    "package": "ncc build",
     "check": "prettier --check ."
   },
   "repository": {
