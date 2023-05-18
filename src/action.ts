@@ -1,7 +1,5 @@
 import * as core from '@actions/core'
 import {gte, inc, parse, ReleaseType, SemVer, valid} from 'semver'
-//import {analyzeCommits} from '@semantic-release/commit-analyzer'
-//import {generateNotes} from '@semantic-release/release-notes-generator'
 import {
   getBranchFromRef,
   isPr,

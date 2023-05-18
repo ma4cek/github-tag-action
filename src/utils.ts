@@ -1,10 +1,10 @@
 import * as core from '@actions/core'
 import {prerelease, rcompare, valid} from 'semver'
-// @ts-ignore
-import DEFAULT_RELEASE_TYPES from '@semantic-release/commit-analyzer/lib/default-release-types'
 import {compareCommits, listTags, Tag} from './github'
 import {defaultChangelogRules} from './defaults'
 import {Await} from './ts'
+
+const DEFAULT_RELEASE_TYPES = require ('@semantic-release/commit-analyzer/lib/default-release-types')
 
 type Tags = Await<ReturnType<typeof listTags>>
 

@@ -52,12 +52,10 @@ var __rest = (this && this.__rest) || function (s, e) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const semver_1 = __nccwpck_require__(1383);
-//import {analyzeCommits} from '@semantic-release/commit-analyzer'
-//import {generateNotes} from '@semantic-release/release-notes-generator'
 const utils_1 = __nccwpck_require__(918);
 const github_1 = __nccwpck_require__(5928);
 const commitAnalyzer = __nccwpck_require__(156);
-const releaseNotesGenerator = __nccwpck_require__(3196);
+const releaseNotesGenerator = __nccwpck_require__(7981);
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         const defaultBump = core.getInput('default_bump');
@@ -445,17 +443,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.mergeWithDefaultChangelogRules = exports.mapCustomReleaseRules = exports.getLatestPrereleaseTag = exports.getLatestTag = exports.isPr = exports.getBranchFromRef = exports.getCommits = exports.getValidTags = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const semver_1 = __nccwpck_require__(1383);
-// @ts-ignore
-const default_release_types_1 = __importDefault(__nccwpck_require__(6513));
 const github_1 = __nccwpck_require__(5928);
 const defaults_1 = __nccwpck_require__(2998);
+const DEFAULT_RELEASE_TYPES = __nccwpck_require__(6513);
 function getValidTags(prefixRegex, shouldFetchAllTags) {
     return __awaiter(this, void 0, void 0, function* () {
         const tags = yield (0, github_1.listTags)(shouldFetchAllTags);
@@ -522,7 +516,7 @@ function mapCustomReleaseRules(customReleaseTypes) {
                 ? `Default section (${defaultRule.section}) will be used instead.`
                 : "The commits matching this rule won't be included in the changelog.");
         }
-        if (!default_release_types_1.default.includes(parts[1])) {
+        if (!DEFAULT_RELEASE_TYPES.includes(parts[1])) {
             core.warning(`${parts[1]} is not a valid release type.`);
             return false;
         }
@@ -66084,7 +66078,7 @@ function highlight(code, options = {}) {
 
 /***/ }),
 
-/***/ 3196:
+/***/ 7981:
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __nccwpck_require__) => {
 
 "use strict";
@@ -71326,59 +71320,6 @@ function readPackageUpSync(options) {
 
 // EXTERNAL MODULE: ./node_modules/debug/src/index.js
 var src = __nccwpck_require__(8237);
-;// CONCATENATED MODULE: external "node:util"
-const external_node_util_namespaceObject = require("node:util");
-// EXTERNAL MODULE: ./node_modules/import-from/index.js
-var import_from = __nccwpck_require__(2197);
-// EXTERNAL MODULE: ./node_modules/conventional-changelog-angular/index.js
-var conventional_changelog_angular = __nccwpck_require__(8143);
-;// CONCATENATED MODULE: ./node_modules/@semantic-release/release-notes-generator/lib/load-changelog-config.js
-
-
-
-
-
-
-
-/**
- * Load `conventional-changelog-parser` options. Handle presets that return either a `Promise<Array>` or a `Promise<Function>`.
- *
- * @param {Object} pluginConfig The plugin configuration.
- * @param {Object} pluginConfig.preset conventional-changelog preset ('angular', 'atom', 'codemirror', 'ember', 'eslint', 'express', 'jquery', 'jscs', 'jshint')
- * @param {string} pluginConfig.config Requireable npm package with a custom conventional-changelog preset
- * @param {Object} pluginConfig.parserOpts Additional `conventional-changelog-parser` options that will overwrite ones loaded by `preset` or `config`.
- * @param {Object} pluginConfig.writerOpts Additional `conventional-changelog-writer` options that will overwrite ones loaded by `preset` or `config`.
- * @param {Object} context The semantic-release context.
- * @param {Array<Object>} context.commits The commits to analyze.
- * @param {String} context.cwd The current working directory.
- *
- * @return {Promise<Object>} a `Promise` that resolve to the `conventional-changelog-core` config.
- */
-/* harmony default export */ const load_changelog_config = (async ({ preset, config, parserOpts, writerOpts, presetConfig }, { cwd }) => {
-  let loadedConfig;
-  const __dirname = (0,external_node_path_namespaceObject.dirname)((0,external_node_url_namespaceObject.fileURLToPath)(import.meta.url));
-
-  if (preset) {
-    const presetPackage = `conventional-changelog-${preset.toLowerCase()}`;
-    loadedConfig = import_from.silent(__dirname, presetPackage) || import_from(cwd, presetPackage);
-  } else if (config) {
-    loadedConfig = import_from.silent(__dirname, config) || import_from(cwd, config);
-  } else {
-    loadedConfig = conventional_changelog_angular;
-  }
-
-  loadedConfig = await (typeof loadedConfig === "function"
-    ? lodash_es_isPlainObject(presetConfig)
-      ? loadedConfig(presetConfig)
-      : (0,external_node_util_namespaceObject.promisify)(loadedConfig)()
-    : loadedConfig);
-
-  return {
-    parserOpts: { ...loadedConfig.parserOpts, ...parserOpts },
-    writerOpts: { ...loadedConfig.writerOpts, ...writerOpts },
-  };
-});
-
 ;// CONCATENATED MODULE: ./node_modules/@semantic-release/release-notes-generator/lib/hosts-config.js
 /* harmony default export */ const hosts_config = ({
   github: {
@@ -71446,7 +71387,7 @@ var conventional_changelog_angular = __nccwpck_require__(8143);
 
 
 
-
+const loadChangelogConfig = require("./lib/load-changelog-config.js");
 
 
 const debug = src("semantic-release:release-notes-generator");
@@ -71470,7 +71411,7 @@ const debug = src("semantic-release:release-notes-generator");
 async function generateNotes(pluginConfig, context) {
   const { commits, lastRelease, nextRelease, options, cwd } = context;
   const repositoryUrl = options.repositoryUrl.replace(/\.git$/i, "");
-  const { parserOpts, writerOpts } = await load_changelog_config(pluginConfig, context);
+  const { parserOpts, writerOpts } = await loadChangelogConfig(pluginConfig, context);
 
   const [match, auth, host, path] = /^(?!.+:\/\/)(?:(?<auth>.*)@)?(?<host>.*?):(?<path>.*)$/.exec(repositoryUrl) || [];
   let { hostname, port, pathname, protocol } = new URL(
