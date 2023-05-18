@@ -52,10 +52,12 @@ var __rest = (this && this.__rest) || function (s, e) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const semver_1 = __nccwpck_require__(1383);
-const commit_analyzer_1 = __nccwpck_require__(156);
-const release_notes_generator_1 = __nccwpck_require__(3196);
-const utils_js_1 = __nccwpck_require__(918);
-const github_js_1 = __nccwpck_require__(5928);
+//import {analyzeCommits} from '@semantic-release/commit-analyzer'
+//import {generateNotes} from '@semantic-release/release-notes-generator'
+const utils_1 = __nccwpck_require__(918);
+const github_1 = __nccwpck_require__(5928);
+const commitAnalyzer = __nccwpck_require__(156);
+const releaseNotesGenerator = __nccwpck_require__(3196);
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         const defaultBump = core.getInput('default_bump');
@@ -72,7 +74,7 @@ function main() {
         const commitSha = core.getInput('commit_sha');
         let mappedReleaseRules;
         if (customReleaseRules) {
-            mappedReleaseRules = (0, utils_js_1.mapCustomReleaseRules)(customReleaseRules);
+            mappedReleaseRules = (0, utils_1.mapCustomReleaseRules)(customReleaseRules);
         }
         const { GITHUB_REF, GITHUB_SHA } = process.env;
         if (!GITHUB_REF) {
@@ -84,27 +86,27 @@ function main() {
             core.setFailed('Missing commit_sha or GITHUB_SHA.');
             return;
         }
-        const currentBranch = (0, utils_js_1.getBranchFromRef)(GITHUB_REF);
+        const currentBranch = (0, utils_1.getBranchFromRef)(GITHUB_REF);
         const isReleaseBranch = releaseBranches
             .split(',')
             .some(branch => currentBranch.match(branch));
         const isPreReleaseBranch = preReleaseBranches
             .split(',')
             .some(branch => currentBranch.match(branch));
-        const isPullRequest = (0, utils_js_1.isPr)(GITHUB_REF);
+        const isPullRequest = (0, utils_1.isPr)(GITHUB_REF);
         const isPrerelease = !isReleaseBranch && !isPullRequest && isPreReleaseBranch;
         // Sanitize identifier according to
         // https://semver.org/#backusnaur-form-grammar-for-valid-semver-versions
         const identifier = (appendToPreReleaseTag ? appendToPreReleaseTag : currentBranch).replace(/[^a-zA-Z0-9-]/g, '-');
         const prefixRegex = new RegExp(`^${tagPrefix}`);
-        const validTags = yield (0, utils_js_1.getValidTags)(prefixRegex, /true/i.test(shouldFetchAllTags));
-        const latestTag = (0, utils_js_1.getLatestTag)(validTags, prefixRegex, tagPrefix);
-        const latestPrereleaseTag = (0, utils_js_1.getLatestPrereleaseTag)(validTags, identifier, prefixRegex);
+        const validTags = yield (0, utils_1.getValidTags)(prefixRegex, /true/i.test(shouldFetchAllTags));
+        const latestTag = (0, utils_1.getLatestTag)(validTags, prefixRegex, tagPrefix);
+        const latestPrereleaseTag = (0, utils_1.getLatestPrereleaseTag)(validTags, identifier, prefixRegex);
         let commits;
         let newVersion;
         let previousVersion;
         if (customTag) {
-            commits = yield (0, utils_js_1.getCommits)(latestTag.commit.sha, commitRef);
+            commits = yield (0, utils_1.getCommits)(latestTag.commit.sha, commitRef);
             core.setOutput('release_type', 'custom');
             newVersion = customTag;
         }
@@ -130,8 +132,8 @@ function main() {
             core.info(`Previous tag was ${previousTag.name}, previous version was ${previousVersion.version}.`);
             core.setOutput('previous_version', previousVersion.version);
             core.setOutput('previous_tag', previousTag.name);
-            commits = yield (0, utils_js_1.getCommits)(previousTag.commit.sha, commitRef);
-            let bump = yield (0, commit_analyzer_1.analyzeCommits)({
+            commits = yield (0, utils_1.getCommits)(previousTag.commit.sha, commitRef);
+            let bump = yield commitAnalyzer.analyzeCommits({
                 releaseRules: mappedReleaseRules
                     ? // analyzeCommits doesn't appreciate rules with a section /shrug
                         mappedReleaseRules.map((_a) => {
@@ -186,10 +188,10 @@ function main() {
         const newTag = `${tagPrefix}${newVersion}`;
         core.info(`New tag after applying prefix is ${newTag}.`);
         core.setOutput('new_tag', newTag);
-        const changelog = yield (0, release_notes_generator_1.generateNotes)({
+        const changelog = yield releaseNotesGenerator.generateNotes({
             preset: 'conventionalcommits',
             presetConfig: {
-                types: (0, utils_js_1.mergeWithDefaultChangelogRules)(mappedReleaseRules)
+                types: (0, utils_1.mergeWithDefaultChangelogRules)(mappedReleaseRules)
             }
         }, {
             commits,
@@ -214,7 +216,7 @@ function main() {
             core.info('Dry run: not performing tag action.');
             return;
         }
-        yield (0, github_js_1.createTag)(newTag, createAnnotatedTag, commitRef);
+        yield (0, github_1.createTag)(newTag, createAnnotatedTag, commitRef);
     });
 }
 exports["default"] = main;
@@ -389,11 +391,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
-const action_js_1 = __importDefault(__nccwpck_require__(9139));
+const action_1 = __importDefault(__nccwpck_require__(9139));
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield (0, action_js_1.default)();
+            yield (0, action_1.default)();
         }
         catch (error) {
             if (error instanceof Error)
@@ -452,11 +454,11 @@ const core = __importStar(__nccwpck_require__(2186));
 const semver_1 = __nccwpck_require__(1383);
 // @ts-ignore
 const default_release_types_1 = __importDefault(__nccwpck_require__(6513));
-const github_js_1 = __nccwpck_require__(5928);
-const defaults_js_1 = __nccwpck_require__(2998);
+const github_1 = __nccwpck_require__(5928);
+const defaults_1 = __nccwpck_require__(2998);
 function getValidTags(prefixRegex, shouldFetchAllTags) {
     return __awaiter(this, void 0, void 0, function* () {
-        const tags = yield (0, github_js_1.listTags)(shouldFetchAllTags);
+        const tags = yield (0, github_1.listTags)(shouldFetchAllTags);
         const invalidTags = tags.filter(tag => !prefixRegex.test(tag.name) || !(0, semver_1.valid)(tag.name.replace(prefixRegex, '')));
         invalidTags.forEach(name => core.debug(`Found Invalid Tag: ${name}.`));
         const validTags = tags
@@ -469,7 +471,7 @@ function getValidTags(prefixRegex, shouldFetchAllTags) {
 exports.getValidTags = getValidTags;
 function getCommits(baseRef, headRef) {
     return __awaiter(this, void 0, void 0, function* () {
-        const commits = yield (0, github_js_1.compareCommits)(baseRef, headRef);
+        const commits = yield (0, github_1.compareCommits)(baseRef, headRef);
         return commits
             .filter(commit => !!commit.commit.message)
             .map(commit => ({
@@ -513,7 +515,7 @@ function mapCustomReleaseRules(customReleaseTypes) {
             core.warning(`${customReleaseRule} is not a valid custom release definition.`);
             return false;
         }
-        const defaultRule = defaults_js_1.defaultChangelogRules[parts[0].toLowerCase()];
+        const defaultRule = defaults_1.defaultChangelogRules[parts[0].toLowerCase()];
         if (customReleaseRule.length !== 3) {
             core.debug(`${customReleaseRule} doesn't mention the section for the changelog.`);
             core.debug(defaultRule
@@ -528,7 +530,7 @@ function mapCustomReleaseRules(customReleaseTypes) {
     })
         .map(customReleaseRule => {
         const [type, release, section] = customReleaseRule.split(releaseTypeSeparator);
-        const defaultRule = defaults_js_1.defaultChangelogRules[type.toLowerCase()];
+        const defaultRule = defaults_1.defaultChangelogRules[type.toLowerCase()];
         return {
             type,
             release,
@@ -538,7 +540,7 @@ function mapCustomReleaseRules(customReleaseTypes) {
 }
 exports.mapCustomReleaseRules = mapCustomReleaseRules;
 function mergeWithDefaultChangelogRules(mappedReleaseRules = []) {
-    const mergedRules = mappedReleaseRules.reduce((acc, curr) => (Object.assign(Object.assign({}, acc), { [curr.type]: curr })), Object.assign({}, defaults_js_1.defaultChangelogRules));
+    const mergedRules = mappedReleaseRules.reduce((acc, curr) => (Object.assign(Object.assign({}, acc), { [curr.type]: curr })), Object.assign({}, defaults_1.defaultChangelogRules));
     return Object.values(mergedRules).filter(rule => !!rule.section);
 }
 exports.mergeWithDefaultChangelogRules = mergeWithDefaultChangelogRules;
@@ -13406,7 +13408,7 @@ var modules = [
     __nccwpck_require__(8787),
     __nccwpck_require__(6208),
     __nccwpck_require__(4899),
-    __nccwpck_require__(7132),
+    __nccwpck_require__(9320),
     __nccwpck_require__(1664),
     __nccwpck_require__(8810),
     __nccwpck_require__(6),
@@ -14167,7 +14169,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 7132:
+/***/ 9320:
 /***/ ((module) => {
 
 "use strict";
@@ -15391,7 +15393,7 @@ iconv.enableStreamingAPI = function enableStreamingAPI(stream_module) {
         return;
 
     // Dependency-inject stream module to create IconvLite stream classes.
-    var streams = __nccwpck_require__(6036)(stream_module);
+    var streams = __nccwpck_require__(9868)(stream_module);
 
     // Not public API yet, but expose the stream classes.
     iconv.IconvLiteEncoderStream = streams.IconvLiteEncoderStream;
@@ -15430,7 +15432,7 @@ if (false) {}
 
 /***/ }),
 
-/***/ 6036:
+/***/ 9868:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
@@ -16082,7 +16084,7 @@ function defaults(opts) {
 
 /***/ }),
 
-/***/ 9320:
+/***/ 1006:
 /***/ ((module) => {
 
 "use strict";
@@ -16148,7 +16150,7 @@ module.exports = function bind(that) {
 "use strict";
 
 
-var implementation = __nccwpck_require__(9320);
+var implementation = __nccwpck_require__(1006);
 
 module.exports = Function.prototype.bind || implementation;
 
@@ -59808,7 +59810,7 @@ function upgradeGPLs (value) {
 
 
 var scan = __nccwpck_require__(7380)
-var parse = __nccwpck_require__(9868)
+var parse = __nccwpck_require__(981)
 
 module.exports = function (source) {
   return parse(scan(source))
@@ -59817,7 +59819,7 @@ module.exports = function (source) {
 
 /***/ }),
 
-/***/ 9868:
+/***/ 981:
 /***/ ((module) => {
 
 "use strict";

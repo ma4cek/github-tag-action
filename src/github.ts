@@ -1,6 +1,6 @@
 import {context, getOctokit} from '@actions/github'
 import * as core from '@actions/core'
-import {Await} from './ts.js'
+import {Await} from './ts'
 
 let octokitSingleton: ReturnType<typeof getOctokit>
 

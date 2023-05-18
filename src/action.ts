@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import {gte, inc, parse, ReleaseType, SemVer, valid} from 'semver'
-import {analyzeCommits} from '@semantic-release/commit-analyzer'
-import {generateNotes} from '@semantic-release/release-notes-generator'
+//import {analyzeCommits} from '@semantic-release/commit-analyzer'
+//import {generateNotes} from '@semantic-release/release-notes-generator'
 import {
   getBranchFromRef,
   isPr,
@@ -11,9 +11,12 @@ import {
   getValidTags,
   mapCustomReleaseRules,
   mergeWithDefaultChangelogRules
-} from './utils.js'
-import {createTag} from './github.js'
-import {Await} from './ts.js'
+} from './utils'
+import {createTag} from './github'
+import {Await} from './ts'
+
+const commitAnalyzer = require('@semantic-release/commit-analyzer')
+const releaseNotesGenerator = require('@semantic-release/release-notes-generator')
 
 export default async function main(): Promise<void> {
   const defaultBump = core.getInput('default_bump') as ReleaseType | 'false'
@@ -122,7 +125,7 @@ export default async function main(): Promise<void> {
 
     commits = await getCommits(previousTag.commit.sha, commitRef)
 
-    let bump = await analyzeCommits(
+    let bump = await commitAnalyzer.analyzeCommits(
       {
         releaseRules: mappedReleaseRules
           ? // analyzeCommits doesn't appreciate rules with a section /shrug
@@ -190,7 +193,7 @@ export default async function main(): Promise<void> {
   core.info(`New tag after applying prefix is ${newTag}.`)
   core.setOutput('new_tag', newTag)
 
-  const changelog = await generateNotes(
+  const changelog = await releaseNotesGenerator.generateNotes(
     {
       preset: 'conventionalcommits',
       presetConfig: {
