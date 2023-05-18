@@ -6,15 +6,10 @@ import {
   getCommits,
   getLatestPrereleaseTag,
   getLatestTag,
-  getValidTags,
-  mapCustomReleaseRules,
-  mergeWithDefaultChangelogRules
+  getValidTags
 } from './utils'
 import {createTag} from './github'
 import {Await} from './ts'
-
-const commitAnalyzer = require('@semantic-release/commit-analyzer')
-const releaseNotesGenerator = require('@semantic-release/release-notes-generator')
 
 export default async function main(): Promise<void> {
   const defaultBump = core.getInput('default_bump') as ReleaseType | 'false'
@@ -27,15 +22,8 @@ export default async function main(): Promise<void> {
   const preReleaseBranches = core.getInput('pre_release_branches')
   const appendToPreReleaseTag = core.getInput('append_to_pre_release_tag')
   const createAnnotatedTag = /true/i.test(core.getInput('create_annotated_tag'))
-  const dryRun = core.getInput('dry_run')
-  const customReleaseRules = core.getInput('custom_release_rules')
   const shouldFetchAllTags = core.getInput('fetch_all_tags')
   const commitSha = core.getInput('commit_sha')
-
-  let mappedReleaseRules
-  if (customReleaseRules) {
-    mappedReleaseRules = mapCustomReleaseRules(customReleaseRules)
-  }
 
   const {GITHUB_REF, GITHUB_SHA} = process.env
 
@@ -123,53 +111,7 @@ export default async function main(): Promise<void> {
 
     commits = await getCommits(previousTag.commit.sha, commitRef)
 
-    let bump = await commitAnalyzer.analyzeCommits(
-      {
-        releaseRules: mappedReleaseRules
-          ? // analyzeCommits doesn't appreciate rules with a section /shrug
-            mappedReleaseRules.map(({section, ...rest}) => ({...rest}))
-          : undefined
-      },
-      {commits, logger: {log: console.info.bind(console)}}
-    )
-
-    // Determine if we should continue with tag creation based on main vs prerelease branch
-    let shouldContinue = true
-    if (isPrerelease) {
-      if (!bump && defaultPreReleaseBump === 'false') {
-        shouldContinue = false
-      }
-    } else {
-      if (!bump && defaultBump === 'false') {
-        shouldContinue = false
-      }
-    }
-
-    // Default bump is set to false and we did not find an automatic bump
-    if (!shouldContinue) {
-      core.debug(
-        'No commit specifies the version bump. Skipping the tag creation.'
-      )
-      return
-    }
-
-    // If we don't have an automatic bump for the prerelease, just set our bump as the default
-    if (isPrerelease && !bump) {
-      bump = defaultPreReleaseBump
-    }
-
-    // If somebody uses custom release rules on a prerelease branch they might create a 'preprepatch' bump.
-    const preReg = /^pre/
-    if (isPrerelease && preReg.test(bump)) {
-      bump = bump.replace(preReg, '')
-    }
-
-    const releaseType: ReleaseType = isPrerelease
-      ? `pre${bump}`
-      : bump || defaultBump
-    core.setOutput('release_type', releaseType)
-
-    const incrementedVersion = inc(previousVersion, releaseType, identifier)
+    const incrementedVersion = inc(previousVersion, "patch", identifier)
 
     if (!incrementedVersion) {
       core.setFailed('Could not increment version.')
@@ -191,26 +133,6 @@ export default async function main(): Promise<void> {
   core.info(`New tag after applying prefix is ${newTag}.`)
   core.setOutput('new_tag', newTag)
 
-  const changelog = await releaseNotesGenerator.generateNotes(
-    {
-      preset: 'conventionalcommits',
-      presetConfig: {
-        types: mergeWithDefaultChangelogRules(mappedReleaseRules)
-      }
-    },
-    {
-      commits,
-      logger: {log: console.info.bind(console)},
-      options: {
-        repositoryUrl: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}`
-      },
-      lastRelease: {gitTag: latestTag.name},
-      nextRelease: {gitTag: newTag, version: newVersion}
-    }
-  )
-  core.info(`Changelog is ${changelog}.`)
-  core.setOutput('changelog', changelog)
-
   if (!isReleaseBranch && !isPreReleaseBranch) {
     core.info(
       'This branch is neither a release nor a pre-release branch. Skipping the tag creation.'
@@ -220,11 +142,6 @@ export default async function main(): Promise<void> {
 
   if (validTags.map(tag => tag.name).includes(newTag)) {
     core.info('This tag already exists. Skipping the tag creation.')
-    return
-  }
-
-  if (/true/i.test(dryRun)) {
-    core.info('Dry run: not performing tag action.')
     return
   }
 
