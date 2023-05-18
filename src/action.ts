@@ -11,9 +11,9 @@ import {
   getValidTags,
   mapCustomReleaseRules,
   mergeWithDefaultChangelogRules
-} from './utils'
-import {createTag} from './github'
-import {Await} from './ts'
+} from './utils.js'
+import {createTag} from './github.js'
+import {Await} from './ts.js'
 
 export default async function main(): Promise<void> {
   const defaultBump = core.getInput('default_bump') as ReleaseType | 'false'
